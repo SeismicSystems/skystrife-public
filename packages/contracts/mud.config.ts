@@ -833,5 +833,14 @@ export default defineWorld({
         value: "bool",
       },
     },
+
+    // ______________________ SEISMIC ____________________________
+
+    SeismicConfig: {
+      key: [],
+      schema: {
+        validator: "address",
+      },
+    },
   },
 });

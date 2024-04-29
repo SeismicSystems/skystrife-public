@@ -24,7 +24,7 @@ import { ResourceId, WorldResourceIdLib } from "@latticexyz/world/src/WorldResou
 
 import { IWorld } from "../src/codegen/world/IWorld.sol";
 import { createTemplates } from "../src/codegen/scripts/CreateTemplates.sol";
-import { SeasonTimes, Admin, SeasonPassConfig, SeasonPassLastSaleAt, SkyPoolConfig, VirtualLevelTemplates, LevelInStandardRotation, LevelInSeasonPassRotation, HeroInRotation, HeroInSeasonPassRotation, MatchRewardPercentages, SeasonPassIndex } from "../src/codegen/index.sol";
+import { SeasonTimes, Admin, SeasonPassConfig, SeasonPassLastSaleAt, SkyPoolConfig, VirtualLevelTemplates, LevelInStandardRotation, LevelInSeasonPassRotation, HeroInRotation, HeroInSeasonPassRotation, MatchRewardPercentages, SeasonPassIndex, SeismicConfig } from "../src/codegen/index.sol";
 import { GrassTemplateId, ForestTemplateId, MountainTemplateId, GrassTemplateId, HalberdierTemplateId, DragoonTemplateId, MarksmanTemplateId } from "../src/codegen/Templates.sol";
 
 import { SeasonPassOnlySystem } from "../src/systems/SeasonPassOnlySystem.sol";
@@ -173,6 +173,11 @@ contract PostDeploy is Script {
     // Transfer season pass namespace to World
     namespaceId = WorldResourceIdLib.encodeNamespace("test_season");
     world.transferOwnership(namespaceId, worldAddress);
+
+    // ______________ SEISMIC __________________
+
+    address seismicValidator = vm.addr(vm.envUint("SEISMIC_ADDRESS"));
+    SeismicConfig.set(seismicValidator);
 
     vm.stopBroadcast();
   }

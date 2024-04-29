@@ -75,3 +75,4 @@ import { LevelTemplatesIndex } from "./tables/LevelTemplatesIndex.sol";
 import { LevelPosition, LevelPositionData } from "./tables/LevelPosition.sol";
 import { LevelPositionIndex } from "./tables/LevelPositionIndex.sol";
 import { VirtualLevelTemplates } from "./tables/VirtualLevelTemplates.sol";
+import { SeismicConfig } from "./tables/SeismicConfig.sol";
