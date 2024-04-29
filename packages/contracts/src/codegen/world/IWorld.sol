@@ -19,6 +19,7 @@ import { INameSystem } from "./INameSystem.sol";
 import { IOfficialLevelSystem } from "./IOfficialLevelSystem.sol";
 import { IPlayerRegisterSystem } from "./IPlayerRegisterSystem.sol";
 import { ISeasonPassSystem } from "./ISeasonPassSystem.sol";
+import { ISeismicSystem } from "./ISeismicSystem.sol";
 import { ITemplateSpawnSystem } from "./ITemplateSpawnSystem.sol";
 import { IWithdrawSystem } from "./IWithdrawSystem.sol";
 
@@ -45,6 +46,7 @@ interface IWorld is
   IOfficialLevelSystem,
   IPlayerRegisterSystem,
   ISeasonPassSystem,
+  ISeismicSystem,
   ITemplateSpawnSystem,
   IWithdrawSystem
 {}

@@ -840,6 +840,7 @@ export default defineWorld({
       key: [],
       schema: {
         validator: "address",
+        seismicContract: "address",
       },
     },
   },

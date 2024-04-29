@@ -177,7 +177,7 @@ contract PostDeploy is Script {
     // ______________ SEISMIC __________________
 
     address seismicValidator = vm.addr(vm.envUint("SEISMIC_ADDRESS"));
-    SeismicConfig.set(seismicValidator);
+    SeismicConfig.setValidator(seismicValidator);
 
     vm.stopBroadcast();
   }
