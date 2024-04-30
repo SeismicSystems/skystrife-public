@@ -11,7 +11,9 @@ contract SeismicSystem is System {
         _;
     }
 
-    function setSeismicContractAddress(address seismicContractAddress) external onlyValidator {
+    function setSeismicConfigParams(
+        address seismicContractAddress
+    ) public onlyValidator {
         SeismicConfig.setSeismicContract(seismicContractAddress);
     }
 }
