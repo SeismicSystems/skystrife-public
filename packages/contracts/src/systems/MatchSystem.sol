@@ -34,6 +34,8 @@ contract MatchSystem is System {
     _;
   }
 
+  event NewMatch(bytes32 matchEntity);
+
   function _createMatch(
     string memory name,
     bytes32 claimedFirstMatchInWindow,
@@ -72,6 +74,8 @@ contract MatchSystem is System {
     MatchName.set(matchEntity, name);
 
     createMatchSkyPool(matchEntity, claimedFirstMatchInWindow);
+
+    emit NewMatch(matchEntity);
   }
 
   function _createMatchSeasonPass(
