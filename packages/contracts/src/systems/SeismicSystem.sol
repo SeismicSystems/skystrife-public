@@ -12,8 +12,10 @@ contract SeismicSystem is System {
     }
 
     function setSeismicConfigParams(
-        address seismicContractAddress
+        address seismicContractAddress,
+        uint256 blindCommitment
     ) public onlyValidator {
         SeismicConfig.setSeismicContract(seismicContractAddress);
+        SeismicConfig.setBlindCommitment(blindCommitment);
     }
 }

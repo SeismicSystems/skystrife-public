@@ -841,6 +841,7 @@ export default defineWorld({
       schema: {
         validator: "address",
         seismicContract: "address",
+        blindCommitment: "uint256",
       },
     },
   },
