@@ -15,6 +15,8 @@ import { hasSeasonPass } from "../hasToken.sol";
 
 import { LibPlayerSetup } from "base/libraries/LibPlayerSetup.sol";
 
+import { ZKProof, callSeismicSpawn } from "../libraries/LibSeismic.sol";
+
 function checkAccessControl(bytes32 matchEntity, address account) returns (bool) {
   ResourceId systemId = MatchAccessControl.get(matchEntity);
   // If access control is not set, skip the check
@@ -29,7 +31,11 @@ function checkAccessControl(bytes32 matchEntity, address account) returns (bool)
 
 contract PlayerRegisterSystem is System {
   // Register msgSender for the given `matchEntity`
-  function register(bytes32 matchEntity, uint256 spawnIndex, bytes32 heroChoice) public returns (bytes32) {
+  function register(
+    bytes32 matchEntity, 
+    uint256 spawnIndex, 
+    bytes32 heroChoice
+  ) public returns (bytes32) {
     require(checkAccessControl(matchEntity, _msgSender()), "caller is not allowed");
     require(SpawnReservedBy.get(matchEntity, spawnIndex) == 0, "spawn point already reserved");
     require(MatchPlayer.get(matchEntity, _msgSender()) == 0, "this account has already registered for the match");
@@ -45,6 +51,42 @@ contract PlayerRegisterSystem is System {
 
     uint256 registrationTime = MatchConfig.getRegistrationTime(matchEntity);
     require(block.timestamp >= registrationTime, "registration not open");
+
+    transferToken(_world(), MatchConfig.getEscrowContract(matchEntity), MatchSweepstake.getEntranceFee(matchEntity));
+
+    return LibPlayerSetup.setup(_msgSender(), matchEntity, spawnIndex, heroChoice);
+  }
+
+  function registerFOW(
+    bytes32 matchEntity, 
+    uint256 spawnIndex, 
+    bytes32 heroChoice,
+    ZKProof calldata proof,
+    uint256[5] calldata pubSignals
+  ) public returns (bytes32) {
+    require(checkAccessControl(matchEntity, _msgSender()), "caller is not allowed");
+    require(SpawnReservedBy.get(matchEntity, spawnIndex) == 0, "spawn point already reserved");
+    require(MatchPlayer.get(matchEntity, _msgSender()) == 0, "this account has already registered for the match");
+
+    bool inRotation = HeroInRotation.get(heroChoice);
+    require(
+      inRotation || (hasSeasonPass(_msgSender()) && HeroInSeasonPassRotation.get(heroChoice)),
+      "invalid hero choice"
+    );
+
+    bytes32 levelId = MatchConfig.getLevelId(matchEntity);
+    require(LevelTemplates.getItem(levelId, spawnIndex) == SpawnSettlementTemplateId, "level entity is not a spawn");
+
+    uint256 registrationTime = MatchConfig.getRegistrationTime(matchEntity);
+    require(block.timestamp >= registrationTime, "registration not open");
+
+    uint256 pubSigSpawnIndex = pubSignals[3];
+    require(pubSigSpawnIndex == spawnIndex, "pub sigs: spawnIndex incorrect");
+
+    bytes32 pubSigHeroChoice = bytes32(pubSignals[4]);
+    require(pubSigHeroChoice == heroChoice, "pub sigs: heroChoice incorrect");
+
+    callSeismicSpawn(proof, pubSignals);
 
     transferToken(_world(), MatchConfig.getEscrowContract(matchEntity), MatchSweepstake.getEntranceFee(matchEntity));
 
