@@ -34,7 +34,7 @@ contract MatchSystem is System {
     _;
   }
 
-  event NewMatch(bytes32 matchEntity);
+  event NewMatch(bytes32 matchEntity, bytes32 levelId);
 
   function _createMatch(
     string memory name,
@@ -75,7 +75,7 @@ contract MatchSystem is System {
 
     createMatchSkyPool(matchEntity, claimedFirstMatchInWindow);
 
-    emit NewMatch(matchEntity);
+    emit NewMatch(matchEntity, levelId);
   }
 
   function _createMatchSeasonPass(
