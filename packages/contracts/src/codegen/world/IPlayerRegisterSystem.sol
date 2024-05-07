@@ -18,6 +18,6 @@ interface IPlayerRegisterSystem {
     uint256 spawnIndex,
     bytes32 heroChoice,
     ZKProof calldata proof,
-    uint256[5] calldata pubSignals
+    uint256[8] calldata pubSignals
   ) external returns (bytes32);
 }

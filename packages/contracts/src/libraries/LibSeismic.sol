@@ -10,10 +10,10 @@ struct ZKProof {
 }
 
 interface ISeismicContract {
-    function spawn(ZKProof calldata proof, uint256[5] calldata pubSignals) external view returns (bool);
+    function spawn(ZKProof calldata proof, uint256[8] calldata pubSignals) external view returns (bool);
 }
 
-function callSeismicSpawn(ZKProof calldata proof, uint256[5] calldata pubSignals) {
+function callSeismicSpawn(ZKProof calldata proof, uint256[8] calldata pubSignals) {
     address seismicContractAddress = SeismicConfig.getSeismicContract();
     ISeismicContract seismicContract = ISeismicContract(seismicContractAddress);
 

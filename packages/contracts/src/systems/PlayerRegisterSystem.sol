@@ -6,7 +6,7 @@ import { System } from "@latticexyz/world/src/System.sol";
 import { SystemSwitch } from "@latticexyz/world-modules/src/utils/SystemSwitch.sol";
 
 import { SkyPoolConfig, MatchAccessControl, MatchSweepstake, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints } from "../codegen/index.sol";
-import { MatchAccessControl, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints, HeroInRotation, HeroInSeasonPassRotation, MatchPlayer } from "../codegen/index.sol";
+import { MatchAccessControl, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints, HeroInRotation, HeroInSeasonPassRotation, MatchPlayer, LevelPosition, LevelPositionData } from "../codegen/index.sol";
 import { SpawnSettlementTemplateId } from "../codegen/Templates.sol";
 
 import { IAllowSystem } from "../IAllowSystem.sol";
@@ -62,7 +62,7 @@ contract PlayerRegisterSystem is System {
     uint256 spawnIndex, 
     bytes32 heroChoice,
     ZKProof calldata proof,
-    uint256[5] calldata pubSignals
+    uint256[8] calldata pubSignals
   ) public returns (bytes32) {
     require(checkAccessControl(matchEntity, _msgSender()), "caller is not allowed");
     require(SpawnReservedBy.get(matchEntity, spawnIndex) == 0, "spawn point already reserved");
@@ -80,10 +80,13 @@ contract PlayerRegisterSystem is System {
     uint256 registrationTime = MatchConfig.getRegistrationTime(matchEntity);
     require(block.timestamp >= registrationTime, "registration not open");
 
-    uint256 pubSigSpawnIndex = pubSignals[3];
-    require(pubSigSpawnIndex == spawnIndex, "pub sigs: spawnIndex incorrect");
+    LevelPositionData memory levelPosition = LevelPosition.get(levelId, spawnIndex);
 
-    bytes32 pubSigHeroChoice = bytes32(pubSignals[4]);
+    // TODO: better type handling
+    require(uint256(int256(levelPosition.x)) == pubSignals[5] - pubSignals[3], "pub sigs: x incorrect");
+    require(uint256(int256(levelPosition.y)) == pubSignals[6] - pubSignals[4], "pub sigs: y incorrect");
+
+    bytes32 pubSigHeroChoice = bytes32(pubSignals[7]);
     require(pubSigHeroChoice == heroChoice, "pub sigs: heroChoice incorrect");
 
     callSeismicSpawn(proof, pubSignals);
