@@ -21,42 +21,18 @@ struct SpawnInputs {
 }
 
 interface ISeismicContract {
-    function spawn(ZKProof calldata proof, uint256[8] calldata publicSignals) external view returns (bool);
+    function spawn(ZKProof calldata proof, uint256[4] calldata publicSignals) external;
 }
 
-function callSeismicSpawn(SpawnInputs calldata inputs, ZKProof calldata proof, bytes32 levelId) {
+function callSeismicSpawn(SpawnInputs calldata inputs, ZKProof calldata proof) {
     address seismicContractAddress = SeismicConfig.getSeismicContract();
     ISeismicContract seismicContract = ISeismicContract(seismicContractAddress);
 
-    LevelPositionData memory spawn = LevelPosition.get(levelId, inputs.spawnIndex);
-
-    uint256 x = 0;
-    uint256 signX = 0;
-    if (spawn.x < 0) {
-      x = uint256(int256(-spawn.x));
-      signX = 1;
-    } else {
-      x = uint256(int256(spawn.x));
-    }
-
-    uint256 y = 0;
-    uint256 signY = 0;
-    if (spawn.y < 0) {
-      y = uint256(int256(-spawn.y));
-      signY = 1;
-    } else {
-      y = uint256(int256(spawn.y));
-    }
-
-    uint256[8] memory publicSignals = [
+    uint256[4] memory publicSignals = [
       inputs.hBlind,
       inputs.hVirtual,
       inputs.hSpawn,
-      x,
-      signX,
-      y,
-      signY,
-      uint256(inputs.heroChoice)
+      inputs.spawnIndex
     ];
 
     seismicContract.spawn(proof, publicSignals);
