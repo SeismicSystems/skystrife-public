@@ -68,6 +68,7 @@ function spawnStarter(bytes32 matchEntity, bytes32 template, bytes32 owner, Posi
   int32 xDiff = position.x - mapCenter.x;
   int32 yDiff = position.y - mapCenter.y;
 
+  // NOTE: potential bug here, "position.x" should be "xDiff"
   if (position.x > 0) {
     position.x = position.x - 1;
   } else if (xDiff < 0) {

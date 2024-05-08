@@ -32,6 +32,7 @@ function checkAccessControl(bytes32 matchEntity, address account) returns (bool)
 
 contract PlayerRegisterSystem is System {
   // Register msgSender for the given `matchEntity`
+  event MatchPos(int32 x, int32 y);
   function register(
     bytes32 matchEntity, 
     uint256 spawnIndex, 
@@ -73,17 +74,18 @@ contract PlayerRegisterSystem is System {
 
     bytes32 levelId = MatchConfig.getLevelId(spawnInputs.matchEntity);
 
-    uint256[] memory spawnIndices = getLevelSpawnIndices(levelId);
-    uint256 spawnIndex = spawnIndices[0];
-    bool spawnFound = false;
-    for (uint256 i = 0; i < spawnIndices.length; i++) {
-      LevelPositionData memory levelPosition = LevelPosition.get(levelId, spawnIndices[i]);
-      if (levelPosition.x == spawnInputs.x && levelPosition.y == spawnInputs.y) {
-        spawnIndex = spawnIndices[i];
-        spawnFound = true;
-        break;
-      }
-    }
+    uint256 spawnIndex = getLevelSpawnIndices(levelId)[spawnInputs.spawnIndex];
+
+    // uint256 spawnIndex = spawnIndices[0];
+    // bool spawnFound = false;
+    // for (uint256 i = 0; i < spawnIndices.length; i++) {
+    //   LevelPositionData memory levelPosition = LevelPosition.get(levelId, spawnIndices[i]);
+    //   if (levelPosition.x == spawnInputs.x && levelPosition.y == spawnInputs.y) {
+    //     spawnIndex = spawnIndices[i];
+    //     spawnFound = true;
+    //     break;
+    //   }
+    // }
 
     // require(spawnFound, "spawn point not found");
     require(SpawnReservedBy.get(spawnInputs.matchEntity, spawnIndex) == 0, "spawn point already reserved");
@@ -92,7 +94,7 @@ contract PlayerRegisterSystem is System {
     uint256 registrationTime = MatchConfig.getRegistrationTime(spawnInputs.matchEntity);
     require(block.timestamp >= registrationTime, "registration not open");
 
-    callSeismicSpawn(spawnInputs, spawnProof);
+    callSeismicSpawn(spawnInputs, spawnProof, levelId);
 
     transferToken(_world(), MatchConfig.getEscrowContract(spawnInputs.matchEntity), MatchSweepstake.getEntranceFee(spawnInputs.matchEntity));
 
