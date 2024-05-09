@@ -6,7 +6,7 @@ import { System } from "@latticexyz/world/src/System.sol";
 import { SystemSwitch } from "@latticexyz/world-modules/src/utils/SystemSwitch.sol";
 
 import { SkyPoolConfig, MatchAccessControl, MatchSweepstake, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints } from "../codegen/index.sol";
-import { MatchAccessControl, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints, HeroInRotation, HeroInSeasonPassRotation, MatchPlayer, LevelPosition, LevelPositionData } from "../codegen/index.sol";
+import { MatchAccessControl, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints, HeroInRotation, HeroInSeasonPassRotation, MatchPlayer, LevelPosition, LevelPositionData, SpawnReservedBy } from "../codegen/index.sol";
 import { SpawnSettlementTemplateId } from "../codegen/Templates.sol";
 
 import { IAllowSystem } from "../IAllowSystem.sol";
@@ -17,6 +17,8 @@ import { LibPlayerSetup } from "base/libraries/LibPlayerSetup.sol";
 import { getLevelSpawnIndices } from "../libraries/LibUtils.sol";
 
 import { ZKProof, SpawnInputs, callSeismicSpawn } from "../libraries/LibSeismic.sol";
+
+import { createPlayerEntity } from "../libraries/LibPlayer.sol";
 
 function checkAccessControl(bytes32 matchEntity, address account) returns (bool) {
   ResourceId systemId = MatchAccessControl.get(matchEntity);
@@ -62,7 +64,7 @@ contract PlayerRegisterSystem is System {
   function registerFOW(
     SpawnInputs calldata spawnInputs,
     ZKProof calldata spawnProof
-  ) public returns (bytes32) {
+  ) public returns (bytes32 player) {
     require(checkAccessControl(spawnInputs.matchEntity, _msgSender()), "caller is not allowed");
     require(MatchPlayer.get(spawnInputs.matchEntity, _msgSender()) == 0, "this account has already registered for the match");
 
@@ -73,21 +75,11 @@ contract PlayerRegisterSystem is System {
     );
 
     bytes32 levelId = MatchConfig.getLevelId(spawnInputs.matchEntity);
+    uint256[] memory spawnIndices = getLevelSpawnIndices(levelId);
+    require(spawnInputs.spawnIndex < spawnIndices.length, "spawn index out of bounds");
+    
+    uint256 spawnIndex = spawnIndices[spawnInputs.spawnIndex];
 
-    uint256 spawnIndex = getLevelSpawnIndices(levelId)[spawnInputs.spawnIndex];
-
-    // uint256 spawnIndex = spawnIndices[0];
-    // bool spawnFound = false;
-    // for (uint256 i = 0; i < spawnIndices.length; i++) {
-    //   LevelPositionData memory levelPosition = LevelPosition.get(levelId, spawnIndices[i]);
-    //   if (levelPosition.x == spawnInputs.x && levelPosition.y == spawnInputs.y) {
-    //     spawnIndex = spawnIndices[i];
-    //     spawnFound = true;
-    //     break;
-    //   }
-    // }
-
-    // require(spawnFound, "spawn point not found");
     require(SpawnReservedBy.get(spawnInputs.matchEntity, spawnIndex) == 0, "spawn point already reserved");
     require(LevelTemplates.getItem(levelId, spawnIndex) == SpawnSettlementTemplateId, "level entity is not a spawn");
 
@@ -98,6 +90,7 @@ contract PlayerRegisterSystem is System {
 
     transferToken(_world(), MatchConfig.getEscrowContract(spawnInputs.matchEntity), MatchSweepstake.getEntranceFee(spawnInputs.matchEntity));
 
-    return LibPlayerSetup.setup(_msgSender(), spawnInputs.matchEntity, spawnIndex, spawnInputs.heroChoice);
+    player = createPlayerEntity(spawnInputs.matchEntity, _msgSender());
+    SpawnReservedBy.set(spawnInputs.matchEntity, spawnIndex, player);
   }
 }

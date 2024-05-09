@@ -13,5 +13,5 @@ import { SpawnInputs, ZKProof } from "./../../libraries/LibSeismic.sol";
 interface IPlayerRegisterSystem {
   function register(bytes32 matchEntity, uint256 spawnIndex, bytes32 heroChoice) external returns (bytes32);
 
-  function registerFOW(SpawnInputs calldata spawnInputs, ZKProof calldata spawnProof) external returns (bytes32);
+  function registerFOW(SpawnInputs calldata spawnInputs, ZKProof calldata spawnProof) external returns (bytes32 player);
 }
