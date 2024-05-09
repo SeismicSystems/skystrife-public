@@ -6,7 +6,7 @@ import { System } from "@latticexyz/world/src/System.sol";
 import { SystemSwitch } from "@latticexyz/world-modules/src/utils/SystemSwitch.sol";
 
 import { SkyPoolConfig, MatchAccessControl, MatchSweepstake, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints } from "../codegen/index.sol";
-import { MatchAccessControl, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints, HeroInRotation, HeroInSeasonPassRotation, MatchPlayer, LevelPosition, LevelPositionData, SpawnReservedBy } from "../codegen/index.sol";
+import { MatchAccessControl, LevelTemplates, MatchConfig, Player, SpawnPoint, SpawnReservedBy, Position, PositionData, MatchSpawnPoints, HeroInRotation, HeroInSeasonPassRotation, MatchPlayer, LevelPosition, LevelPositionData, SpawnReservedBy, SeismicConfig } from "../codegen/index.sol";
 import { SpawnSettlementTemplateId } from "../codegen/Templates.sol";
 
 import { IAllowSystem } from "../IAllowSystem.sol";
@@ -16,9 +16,10 @@ import { hasSeasonPass } from "../hasToken.sol";
 import { LibPlayerSetup } from "base/libraries/LibPlayerSetup.sol";
 import { getLevelSpawnIndices } from "../libraries/LibUtils.sol";
 
-import { ZKProof, SpawnInputs, callSeismicSpawn } from "../libraries/LibSeismic.sol";
+import { ZKProof, SpawnInputs, PlayerActionSignature, getPlayerFromSpawnSig, callSeismicSpawn } from "../libraries/LibSeismic.sol";
 
 import { createPlayerEntity } from "../libraries/LibPlayer.sol";
+import { startMatchIfAllRegistered } from "../libraries/LibMatch.sol";
 
 function checkAccessControl(bytes32 matchEntity, address account) returns (bool) {
   ResourceId systemId = MatchAccessControl.get(matchEntity);
@@ -34,7 +35,6 @@ function checkAccessControl(bytes32 matchEntity, address account) returns (bool)
 
 contract PlayerRegisterSystem is System {
   // Register msgSender for the given `matchEntity`
-  event MatchPos(int32 x, int32 y);
   function register(
     bytes32 matchEntity, 
     uint256 spawnIndex, 
@@ -63,21 +63,26 @@ contract PlayerRegisterSystem is System {
 
   function registerFOW(
     SpawnInputs calldata spawnInputs,
-    ZKProof calldata spawnProof
+    ZKProof calldata spawnProof,
+    PlayerActionSignature calldata signature
   ) public returns (bytes32 player) {
-    require(checkAccessControl(spawnInputs.matchEntity, _msgSender()), "caller is not allowed");
-    require(MatchPlayer.get(spawnInputs.matchEntity, _msgSender()) == 0, "this account has already registered for the match");
+    require(msg.sender == SeismicConfig.getValidator(), "Only the seismic validator can call this function");
+
+    address playerAddress = getPlayerFromSpawnSig(spawnInputs, signature);
+
+    require(checkAccessControl(spawnInputs.matchEntity, playerAddress), "caller is not allowed");
+    require(MatchPlayer.get(spawnInputs.matchEntity, playerAddress) == 0, "this account has already registered for the match");
 
     bool inRotation = HeroInRotation.get(spawnInputs.heroChoice);
     require(
-      inRotation || (hasSeasonPass(_msgSender()) && HeroInSeasonPassRotation.get(spawnInputs.heroChoice)),
+      inRotation || (hasSeasonPass(playerAddress) && HeroInSeasonPassRotation.get(spawnInputs.heroChoice)),
       "invalid hero choice"
     );
 
     bytes32 levelId = MatchConfig.getLevelId(spawnInputs.matchEntity);
     uint256[] memory spawnIndices = getLevelSpawnIndices(levelId);
     require(spawnInputs.spawnIndex < spawnIndices.length, "spawn index out of bounds");
-    
+
     uint256 spawnIndex = spawnIndices[spawnInputs.spawnIndex];
 
     require(SpawnReservedBy.get(spawnInputs.matchEntity, spawnIndex) == 0, "spawn point already reserved");
@@ -90,7 +95,9 @@ contract PlayerRegisterSystem is System {
 
     transferToken(_world(), MatchConfig.getEscrowContract(spawnInputs.matchEntity), MatchSweepstake.getEntranceFee(spawnInputs.matchEntity));
 
-    player = createPlayerEntity(spawnInputs.matchEntity, _msgSender());
+    player = createPlayerEntity(spawnInputs.matchEntity, playerAddress);
     SpawnReservedBy.set(spawnInputs.matchEntity, spawnIndex, player);
+
+    startMatchIfAllRegistered(spawnInputs.matchEntity);
   }
 }

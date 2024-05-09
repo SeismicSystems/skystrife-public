@@ -20,8 +20,25 @@ struct SpawnInputs {
   uint256 spawnIndex;
 }
 
+struct PlayerActionSignature {
+  bytes32 r;
+  bytes32 s;
+  uint8 v;
+}
+
 interface ISeismicContract {
     function spawn(ZKProof calldata proof, uint256[4] calldata publicSignals) external;
+}
+
+function getPlayerFromSpawnSig(
+  SpawnInputs calldata inputs, 
+  PlayerActionSignature calldata sig
+) returns (address) {
+  bytes32 hash = keccak256(abi.encode("spawn", inputs.matchEntity, inputs.heroChoice, inputs.spawnIndex));
+  bytes32 prefixedHash = keccak256(
+    abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
+  );
+  return ecrecover(prefixedHash, sig.v, sig.r, sig.s);
 }
 
 function callSeismicSpawn(SpawnInputs calldata inputs, ZKProof calldata proof) {
