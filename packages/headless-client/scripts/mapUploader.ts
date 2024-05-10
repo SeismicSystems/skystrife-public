@@ -2,7 +2,7 @@ import { bulkUploadMap } from "client/src/app/ui/Admin/bulkUploadMap";
 import { createSkyStrife } from "../src/createSkyStrife";
 import debug from "../../../maps/debug.json" assert { type: "json" };
 import gmIsland from "../../../maps/gm-island.json" assert { type: "json" };
-import Cauldron from "../../../maps/*official/4p-pinwheel.json" assert { type: "json" };
+import Cauldron from "../../../maps/*official/4p-cauldron-v2.json" assert { type: "json" };
 import KnifeFight from "../../../maps/*official/2p-knife-fight-v2.json" assert { type: "json" };
 import TheIsle from "../../../maps/in-progress/2p-isle-v2.json" assert { type: "json" };
 import Antelope from "../../../maps/*official/3p-antelope-v2.json" assert { type: "json" };
