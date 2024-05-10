@@ -91,7 +91,7 @@ contract PlayerRegisterSystem is System {
     uint256 registrationTime = MatchConfig.getRegistrationTime(spawnInputs.matchEntity);
     require(block.timestamp >= registrationTime, "registration not open");
 
-    callSeismicSpawn(spawnInputs, spawnProof);
+    callSeismicSpawn(playerAddress, spawnInputs, spawnProof);
 
     transferToken(_world(), MatchConfig.getEscrowContract(spawnInputs.matchEntity), MatchSweepstake.getEntranceFee(spawnInputs.matchEntity));
 

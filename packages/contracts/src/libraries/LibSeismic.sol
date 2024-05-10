@@ -17,6 +17,7 @@ struct SpawnInputs {
   uint256 hBlind;
   uint256 hVirtual;
   uint256 hSpawn;
+  uint256 hSettlement;
   uint256 spawnIndex;
 }
 
@@ -27,7 +28,7 @@ struct PlayerActionSignature {
 }
 
 interface ISeismicContract {
-    function spawn(ZKProof calldata proof, uint256[4] calldata publicSignals) external;
+    function spawn(address player, ZKProof calldata proof, uint256[7] calldata publicSignals) external;
 }
 
 function getPlayerFromSpawnSig(
@@ -41,16 +42,19 @@ function getPlayerFromSpawnSig(
   return ecrecover(prefixedHash, sig.v, sig.r, sig.s);
 }
 
-function callSeismicSpawn(SpawnInputs calldata inputs, ZKProof calldata proof) {
+function callSeismicSpawn(address player, SpawnInputs calldata inputs, ZKProof calldata proof) {
     address seismicContractAddress = SeismicConfig.getSeismicContract();
     ISeismicContract seismicContract = ISeismicContract(seismicContractAddress);
 
-    uint256[4] memory publicSignals = [
+    uint256[7] memory publicSignals = [
       inputs.hBlind,
       inputs.hVirtual,
       inputs.hSpawn,
-      inputs.spawnIndex
+      inputs.hSettlement,
+      inputs.spawnIndex,
+      uint256(uint128(bytes16(inputs.heroChoice << 128))),
+      uint256(uint128(bytes16(inputs.heroChoice)))
     ];
 
-    seismicContract.spawn(proof, publicSignals);
+    seismicContract.spawn(player, proof, publicSignals);
 }
